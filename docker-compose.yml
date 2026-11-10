@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: vladislavponomaryov
+      POSTGRES_PASSWORD: dn31de5861dnC
+      POSTGRES_DB: history_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-multiple-databases.sh:/docker-entrypoint-initdb.d/init-multiple-databases.sh
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d history_db" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/historical-research-api
+    depends_on:
+      - db
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
