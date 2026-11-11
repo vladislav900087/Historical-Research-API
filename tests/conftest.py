@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.api.dependencies import get_db
 from app.core.config import settings
-from app.db.base import Base
+from app.models import Base
 
 TEST_DATABASE_URL = settings.DATABASE_URL.replace('history_db', 'test_history_db')
 
@@ -30,7 +30,8 @@ def db_session():
     yield session
 
     session.close()
-    transaction.rollback()
+    if transaction.is_active:
+        transaction.rollback()
     connection.close()
 
 @pytest.fixture(scope='function')
